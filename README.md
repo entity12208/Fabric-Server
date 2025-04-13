@@ -20,3 +20,7 @@ backup.sh
 This will be run automatically every day at 3AM.
 ## Whitelist
 To join the server, you must first add your username and UUID to the Whitelist file, `whitelist.json` (find your UUID at `minecraftuuid.com`). If you would like your server to be public, remove this file entirely.
+## Things to remember
+* This server works on Java edition *only*. For bedrock support, add geyser (`geysermc.org`).
+* For the best 24/7 support, run this on a **Raspberry Pie**, a type of mini-computer.
+* Make sure to forward port `25565` on your router.

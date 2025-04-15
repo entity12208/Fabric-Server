@@ -2,7 +2,12 @@
 An SMP fabric server for linux.
 
 ## Setup
-To set up the server, run:
+To set up the server, first clone into this repository using:
+```
+git clone https://github.com/entity12208/fabric-smp/
+cd fabric-smp
+```
+Then, setup the server with:
 ```
 chmod +x setup-fabric-smp-full.sh
 ./setup-fabric-smp-full.sh

@@ -4,13 +4,13 @@ A fabric Minecraft server for Linux.
 ## Setup
 To set up the server, first clone this repository using:
 ```
-git clone https://github.com/entity12208/fabric-smp/
-cd fabric-smp
+git clone https://github.com/entity12208/fabric-server/
+cd fabric-server
 ```
 Then, set up the server with:
 ```
 chmod +x setup-fabric-server-full.sh
-./setup-fabric-smp-full.sh
+./setup-fabric-server-full.sh
 ```
 This will create a folder for the server with **some** of the files needed. To make the rest, start the server.
 ## Starting the server

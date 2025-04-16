@@ -26,7 +26,7 @@ echo "eula=true" > eula.txt
 # === DOWNLOAD MODS ===
 echo "⬇️ Downloading mods..."
 
-MODS=(
+SMPMODS=(
   # Gameplay Mods
   "https://cdn.modrinth.com/data/AANobbMI/versions/1.10.0/origins-1.10.0.jar"
   "https://cdn.modrinth.com/data/4P9FNjpb/versions/4.1.0/extra-origins-4.1.0.jar"
@@ -46,7 +46,7 @@ MODS=(
   "https://cdn.modrinth.com/data/gvQqBUqZ/versions/1.21.5-1.1.3/dashloader-fabric-1.21.5-1.1.3.jar"
 )
 
-for mod_url in "${MODS[@]}"; do
+for mod_url in "${MODS[@]}"; do # Replace "SMPMODS" with another set of mod urls to switch to those mods.
   curl -L -o "$MOD_DIR/$(basename "$mod_url")" "$mod_url"
 done
 

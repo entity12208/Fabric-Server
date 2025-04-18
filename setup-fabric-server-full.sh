@@ -46,7 +46,7 @@ SMPMODS=(
   "https://cdn.modrinth.com/data/gvQqBUqZ/versions/1.21.5-1.1.3/dashloader-fabric-1.21.5-1.1.3.jar"
 )
 
-for mod_url in "${MODS[@]}"; do # Replace "SMPMODS" with another set of mod urls to switch to those mods.
+for mod_url in "${SMPMODS[@]}"; do # Replace "SMPMODS" with another set of mod urls to switch to those mods.
   curl -L -o "$MOD_DIR/$(basename "$mod_url")" "$mod_url"
 done
 

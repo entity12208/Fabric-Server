@@ -21,9 +21,14 @@ jobs:
 
       - name: Lint Shell Scripts
         run: |
-          shellcheck setup-fabric-server-full.sh || echo "⚠️ Linting issues found."
-      
-      - name: Test Shell Script
+          echo "🔍 Linting all scripts in the 'scripts/' directory..."
+          shellcheck scripts/*.sh || echo "⚠️ Linting issues found."
+
+      - name: Test Shell Scripts
         run: |
-          chmod +x setup-fabric-server-full.sh
-          ./setup-fabric-server-full.sh --dry-run || echo "⚠️ Script execution failed."
+          echo "🚀 Testing all scripts in the 'scripts/' directory..."
+          for script in scripts/*.sh; do
+            chmod +x "$script"
+            echo "Testing $script..."
+            "$script" --dry-run || echo "⚠️ Script $script failed during execution."
+          done

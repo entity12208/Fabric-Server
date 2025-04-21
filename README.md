@@ -1,6 +1,7 @@
 # Fabric Server
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Minecraft Version](https://img.shields.io/badge/Minecraft-1.21.5-blue)](https://www.minecraft.net)
+[![Stars](https://img.shields.io/github/stars/entity12208/Fabric-Server)](https://github.com/entity12208/Fabric-Server/stargazers)
 
 A Linux-based Fabric Minecraft server setup script. Supports modded gameplay with performance and quality-of-life enhancements.
 
@@ -25,8 +26,8 @@ sudo apt update && sudo apt install -y openjdk-21-jre-headless screen curl unzip
 ## Setup
 1. Clone this repository:
    ```bash
-   git clone https://github.com/entity12208/fabric-server/
-   cd fabric-server
+   git clone https://github.com/entity12208/Fabric-Server.git
+   cd Fabric-Server
    ```
 2. Make the setup script executable and run it:
    ```bash
@@ -44,6 +45,13 @@ Run the server with:
 ```
 This will open the server console in your terminal.
 
+## Updating Mods
+To update all mods, use the `update-mods.sh` script:
+```bash
+chmod +x update-mods.sh
+./update-mods.sh
+```
+
 ## Backups
 Daily backups are created automatically at **3 AM**. You can also manually back up the server by running:
 ```bash
@@ -60,8 +68,9 @@ white-list=false
 
 ## Adding Mods
 1. By default, the server installs a set of SMP mods. To change this:
-   - Edit line 49 in `setup-fabric-server-full.sh`.
-   - Replace `SMPMODS` with a list of mod URLs.
+   - Edit the `SMPMODS` array in `setup-fabric-server-full.sh` or `update-mods.sh`.
+   - Replace it with a list of mod URLs.
+
 2. Alternatively, add `.jar` mod files directly to the `mods` folder.
 
 ## Troubleshooting
@@ -73,6 +82,9 @@ white-list=false
 - Works with **Java Edition** only. For Bedrock support, add [GeyserMC](https://geysermc.org).
 - Recommended for 24/7 uptime: Use a Raspberry Pi (Pi 5 suggested).
 - Keep your mods and server files updated for the best experience.
+
+## Contributing
+Contributions are welcome! Please follow the [CONTRIBUTING.md](CONTRIBUTING.md) guidelines to get started.
 
 ## License
 This project is licensed under the [MIT License](LICENSE).

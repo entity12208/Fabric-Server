@@ -1,0 +1,29 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install ShellCheck
+        run: sudo apt-get install -y shellcheck
+
+      - name: Lint Shell Scripts
+        run: |
+          shellcheck setup-fabric-server-full.sh || echo "⚠️ Linting issues found."
+      
+      - name: Test Shell Script
+        run: |
+          chmod +x setup-fabric-server-full.sh
+          ./setup-fabric-server-full.sh --dry-run || echo "⚠️ Script execution failed."

@@ -1,36 +1,78 @@
 # Fabric Server
-A fabric Minecraft server for Linux.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Minecraft Version](https://img.shields.io/badge/Minecraft-1.21.5-blue)](https://www.minecraft.net)
+
+A Linux-based Fabric Minecraft server setup script. Supports modded gameplay with performance and quality-of-life enhancements.
+
+## Features
+- **Mod Support**: Pre-configured with SMP mods like Origins, REI, and Better Combat.
+- **Performance Optimized**: Includes mods like Lithium, Starlight, and FerriteCore for smooth gameplay.
+- **Automated Backups**: Daily backup system to ensure your world is safe.
+- **Whitelist Management**: Easily manage server access with a whitelist.
+- **Cross-Platform Ready**: Add GeyserMC for Bedrock support.
+
+## Prerequisites
+Before setting up the server, ensure you have the following installed on your Linux system:
+- **Java 21**: OpenJDK 21 or equivalent.
+- **screen**: For running the server in the background.
+- **curl** and **unzip**: For fetching and extracting files.
+
+Install dependencies with:
+```bash
+sudo apt update && sudo apt install -y openjdk-21-jre-headless screen curl unzip
+```
 
 ## Setup
-To set up the server, first clone this repository using:
-```
-git clone https://github.com/entity12208/fabric-server/
-cd fabric-server
-```
-Then, set up the server with:
-```
-chmod +x setup-fabric-server-full.sh
-./setup-fabric-server-full.sh
-```
-This will create a folder for the server with **some** of the files needed. To make the rest, start the server.
-## Starting the server
-To start the server, run:
-```
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/entity12208/fabric-server/
+   cd fabric-server
+   ```
+2. Make the setup script executable and run it:
+   ```bash
+   chmod +x setup-fabric-server-full.sh
+   ./setup-fabric-server-full.sh
+   ```
+   This will create the necessary server files and folders.
+
+3. **Important**: The setup script is **one-time use**. Re-running it may overwrite your existing server files.
+
+## Starting the Server
+Run the server with:
+```bash
 ./start-server.sh
 ```
-This will make the terminal into the server **console**.
-## Backing up the server
-To back up the server and all its files, run:
-```
+This will open the server console in your terminal.
+
+## Backups
+Daily backups are created automatically at **3 AM**. You can also manually back up the server by running:
+```bash
 ./backup.sh
 ```
-This will be run automatically every day at **3 AM** (if the device is on).
+
 ## Whitelist
-To join the server, you must first add your username and UUID to the Whitelist file, `whitelist.json` (find your UUID at `minecraftuuid.com`). If you would like your server to be public, remove this file entirely.
-## Adding mods
-By default, SMP mods are installed. To change this, edit line 49 of `setup-fabric-server-full.sh` and change `SMPMODS` to another list of mod URLs you have created. You can also start the server and change the mods manually.
-## Things to remember
-* This server works on Java edition *only*. For bedrock support, add geyser (`geysermc.org`).
-* For the best 24/7 support, run this on a **Raspberry Pie** (Pi 5 recommended), a type of mini-computer.
-* Make sure to forward port `25565` on your router.
-* Don't run the setup script more than once, otherwise all your files will be reset (with some possible errors and glitches)
+To join the server, add your Minecraft username and UUID to `whitelist.json`. Find your UUID at [MinecraftUUID.com](https://minecraftuuid.com).
+
+If you want a public server, disable the whitelist in `server.properties`:
+```properties
+white-list=false
+```
+
+## Adding Mods
+1. By default, the server installs a set of SMP mods. To change this:
+   - Edit line 49 in `setup-fabric-server-full.sh`.
+   - Replace `SMPMODS` with a list of mod URLs.
+2. Alternatively, add `.jar` mod files directly to the `mods` folder.
+
+## Troubleshooting
+- **Server Crashes**: The server auto-restarts. Check the logs in `logs/latest.log` for details.
+- **Port Forwarding**: Ensure port `25565` is open on your router for others to connect.
+- **Whitelist Issues**: Verify usernames and UUIDs are correct in `whitelist.json`.
+
+## Notes
+- Works with **Java Edition** only. For Bedrock support, add [GeyserMC](https://geysermc.org).
+- Recommended for 24/7 uptime: Use a Raspberry Pi (Pi 5 suggested).
+- Keep your mods and server files updated for the best experience.
+
+## License
+This project is licensed under the [MIT License](LICENSE).

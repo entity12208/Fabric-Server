@@ -8,27 +8,77 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      mc_versions:
+        description: "Comma-separated Minecraft versions (e.g., 1.21.5,1.20.1)"
+        required: false
+        default: "1.21.5,1.20.1"
+      server_types:
+        description: "Comma-separated server types (e.g., fabric,paper,forge,vanilla)"
+        required: false
+        default: "fabric,paper,forge,vanilla"
+
 jobs:
-  lint-and-test:
+  test-minecraft-servers:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        mc_version: ${{ fromJson(inputs.mc_versions || '["1.21.5","1.20.1"]') }}
+        server_type: ${{ fromJson(inputs.server_types || '["fabric","paper","forge","vanilla"]') }}
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Install ShellCheck
-        run: sudo apt-get install -y shellcheck
-
-      - name: Lint Shell Scripts
+      - name: Install Dependencies
         run: |
-          echo "🔍 Linting all scripts in the 'scripts/' directory..."
-          shellcheck scripts/*.sh || echo "⚠️ Linting issues found."
+          sudo apt update
+          sudo apt install -y openjdk-21-jre-headless curl jq
 
-      - name: Test Shell Scripts
+      - name: Setup Minecraft Server
+        id: setup
         run: |
-          echo "🚀 Testing all scripts in the 'scripts/' directory..."
-          for script in scripts/*.sh; do
-            chmod +x "$script"
-            echo "Testing $script..."
-            "$script" --dry-run || echo "⚠️ Script $script failed during execution."
-          done
+          MC_VERSION="${{ matrix.mc_version }}"
+          SERVER_TYPE="${{ matrix.server_type }}"
+          INSTALL_DIR="$HOME/minecraft-server-$MC_VERSION-$SERVER_TYPE"
+
+          echo "🌐 Fetching server JAR URL for version $MC_VERSION and type $SERVER_TYPE..."
+          SERVER_JAR_URL=$(curl -s "https://mcutils.com/api/v1/jars?version=$MC_VERSION&type=$SERVER_TYPE" | jq -r '.url')
+
+          if [ "$SERVER_JAR_URL" == "null" ] || [ -z "$SERVER_JAR_URL" ]; then
+            echo "❌ Error: Could not find a server JAR for version $MC_VERSION and type $SERVER_TYPE."
+            exit 1
+          fi
+
+          echo "✅ Found server JAR URL: $SERVER_JAR_URL"
+
+          echo "📂 Creating server folder at $INSTALL_DIR..."
+          mkdir -p "$INSTALL_DIR"
+          cd "$INSTALL_DIR"
+
+          echo "⬇️ Downloading server JAR..."
+          curl -L -o "server.jar" "$SERVER_JAR_URL"
+
+          echo "✅ Accepting Minecraft EULA..."
+          echo "eula=true" > eula.txt
+
+          echo "⚙️ Starting Minecraft server for version $MC_VERSION and type $SERVER_TYPE..."
+          java -Xms1G -Xmx1G -jar server.jar nogui &
+          SERVER_PID=$!
+
+          echo "⏳ Waiting for server to start..."
+          sleep 30
+
+          if ps -p $SERVER_PID > /dev/null; then
+            echo "✅ Server for version $MC_VERSION and type $SERVER_TYPE started successfully."
+            kill $SERVER_PID
+            wait $SERVER_PID || true
+          else
+            echo "❌ Error: Server for version $MC_VERSION and type $SERVER_TYPE failed to start."
+            exit 1
+          fi
+
+      - name: Clean Up Server Files
+        run: |
+          echo "🧹 Cleaning up server files..."
+          rm -rf "$HOME/minecraft-server-${{ matrix.mc_version }}-${{ matrix.server_type }}"

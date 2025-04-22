@@ -2,15 +2,14 @@
 
 # === CONFIG ===
 MC_VERSION="1.21.5"
-FABRIC_INSTALLER_VERSION="0.11.2"
-FABRIC_LOADER_VERSION="0.15.7"
+FABRIC_API_VERSION="" # Will be dynamically fetched
 INSTALL_DIR="$HOME/fabric-smp-server"
 MOD_DIR="$INSTALL_DIR/mods"
 BACKUP_DIR="$INSTALL_DIR/backups"
 
 # === DEPENDENCY CHECK ===
 echo "🔍 Checking for required dependencies..."
-for cmd in java curl screen unzip; do
+for cmd in java curl screen unzip jq; do
   if ! command -v $cmd &> /dev/null; then
     echo "❌ Error: $cmd is not installed. Please install it and re-run the script."
     exit 1
@@ -18,10 +17,23 @@ for cmd in java curl screen unzip; do
 done
 
 # Update system packages and install dependencies
-sudo apt update && sudo apt install -y openjdk-24-jre-headless screen curl unzip || {
+sudo apt update && sudo apt install -y openjdk-21-jre-headless screen curl unzip jq || {
   echo "❌ Error: Failed to install dependencies. Check your internet connection and try again."
   exit 1
 }
+
+# === FETCH LATEST STABLE FABRIC API VERSION ===
+echo "🌐 Fetching the latest stable Fabric API version..."
+LATEST_RELEASE_URL="https://api.github.com/repos/FabricMC/fabric/releases/latest"
+FABRIC_API_URL=$(curl -s "$LATEST_RELEASE_URL" | jq -r '.assets[] | select(.name | test("fabric-api.*\\.jar$")) | .browser_download_url')
+
+if [ -z "$FABRIC_API_URL" ]; then
+  echo "❌ Error: Failed to fetch the latest Fabric API. Check your internet connection or try again later."
+  exit 1
+fi
+
+FABRIC_API_VERSION=$(basename "$FABRIC_API_URL" | sed -E 's/.*fabric-api-([0-9.]+\\+.*)\\.jar$/\1/')
+echo "✅ Latest Fabric API version: $FABRIC_API_VERSION"
 
 # === CREATE SERVER FOLDER ===
 echo "📂 Creating server folder structure..."
@@ -32,24 +44,18 @@ cd "$INSTALL_DIR" || {
   exit 1
 }
 
-# === INSTALL FABRIC SERVER ===
-echo "⬇️ Downloading and installing Fabric server..."
-curl -O "https://maven.fabricmc.net/net/fabricmc/fabric-installer/$FABRIC_INSTALLER_VERSION/fabric-installer-$FABRIC_INSTALLER_VERSION.jar" || {
-  echo "❌ Error: Failed to download Fabric installer. Check your internet connection."
+# === DOWNLOAD FABRIC API ===
+echo "⬇️ Downloading Fabric API..."
+curl -L -o "$MOD_DIR/fabric-api-$FABRIC_API_VERSION.jar" "$FABRIC_API_URL" || {
+  echo "❌ Error: Failed to download Fabric API. Check your internet connection."
   exit 1
 }
-
-java -jar fabric-installer-$FABRIC_INSTALLER_VERSION.jar server -mcversion $MC_VERSION -loader $FABRIC_LOADER_VERSION -downloadMinecraft || {
-  echo "❌ Error: Failed to install Fabric server. Ensure Java is installed and try again."
-  exit 1
-}
-rm "fabric-installer-$FABRIC_INSTALLER_VERSION.jar"
 
 # === ACCEPT EULA ===
 echo "✅ Accepting Minecraft EULA..."
 echo "eula=true" > eula.txt
 
-# === DOWNLOAD MODS ===
+# === DOWNLOAD SMP MODS ===
 echo "⬇️ Downloading mods..."
 SMPMODS=(
   # Default SMP Mods
@@ -64,21 +70,11 @@ SMPMODS=(
 
   # Performance Mods
   "https://cdn.modrinth.com/data/X8VZfWKA/versions/3.1.1/ferritecore-3.1.1-fabric.jar"
-  "https://cdn.modrinth.com/data/1eAoo2KR/versions/1.7.2.2/fabric-api-1.7.2.2.jar"
   "https://cdn.modrinth.com/data/LQm6jbCE/versions/1.21.5-0.4.7/lithium-fabric-mc1.21.5-0.4.7.jar"
   "https://cdn.modrinth.com/data/f7cKXWnU/versions/1.5.2/starlight-1.5.2-fabric.jar"
 )
 
-# Example alternate mod list
-EXAMPLEMODS=(
-  "https://cdn.modrinth.com/data/EXAMPLE/versions/1.0.0/example-mod-1.0.0.jar"
-  "https://cdn.modrinth.com/data/EXAMPLE/versions/1.2.3/another-example-mod-1.2.3.jar"
-)
-
-# Use SMPMODS by default; change to EXAMPLEMODS to switch
-MODLIST=SMPMODS
-
-for mod_url in "${!MODLIST}"; do
+for mod_url in "${SMPMODS[@]}"; do
   curl -L -o "$MOD_DIR/$(basename "$mod_url")" "$mod_url" || {
     echo "⚠️ Warning: Failed to download mod from $mod_url. Skipping..."
   }
@@ -90,11 +86,11 @@ cat <<EOF > start-server.sh
 #!/bin/bash
 cd "$INSTALL_DIR"
 while true; do
-#  echo "🟢 Starting Minecraft server..."
+  echo "🟢 Starting Minecraft server..."
   screen -S smpserver -dm java -Xms2G -Xmx4G -jar fabric-server-launch.jar nogui
-#  wait \$!
-#  echo "🔁 Server crashed. Restarting in 10s..."
-#  sleep 10
+  wait \$!
+  echo "🔁 Server crashed. Restarting in 10s..."
+  sleep 10
 done
 EOF
 chmod +x start-server.sh

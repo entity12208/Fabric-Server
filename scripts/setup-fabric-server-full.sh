@@ -14,8 +14,8 @@ for cmd in java curl jq; do
 done
 
 # === INPUT FROM ENVIRONMENT VARIABLES ===
-MC_VERSION=${MC_VERSION:-"1.21.5"} # Default to 1.21.5 if not set
-SERVER_TYPE=${SERVER_TYPE:-"fabric"} # Default to fabric if not set
+MC_VERSION=${MC_VERSION:-"1.20.1"} # Default to 1.20.1 if not set
+SERVER_TYPE=${SERVER_TYPE:-"forge"} # Default to forge if not set
 
 echo "🌐 Minecraft Version: $MC_VERSION"
 echo "🛠️  Server Type: $SERVER_TYPE"
@@ -28,8 +28,14 @@ RAW_RESPONSE=$(curl -s "$API_URL")
 # Log the raw API response for debugging
 echo "Raw API Response: $RAW_RESPONSE"
 
+# Validate if the response is valid JSON
+if ! echo "$RAW_RESPONSE" | jq empty 2>/dev/null; then
+  echo "❌ Error: Received invalid JSON from the API. Please check the API response and your inputs."
+  exit 1
+fi
+
 # Parse the response using jq
-SERVER_JAR_URL=$(echo "$RAW_RESPONSE" | jq -r '.url' 2>/dev/null)
+SERVER_JAR_URL=$(echo "$RAW_RESPONSE" | jq -r '.url')
 
 if [[ "$SERVER_JAR_URL" == "null" || -z "$SERVER_JAR_URL" ]]; then
   echo "❌ Error: Could not find a server JAR for version $MC_VERSION and type $SERVER_TYPE. Please check your inputs and try again."

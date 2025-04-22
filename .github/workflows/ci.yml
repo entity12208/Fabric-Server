@@ -26,6 +26,8 @@ jobs:
 
       - name: Test Shell Scripts
         run: |
+          sudo apt update
+          sudo apt upgrade
           echo "🚀 Testing all scripts in the 'scripts/' directory..."
           for script in scripts/*.sh; do
             chmod +x "$script"

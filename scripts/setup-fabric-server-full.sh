@@ -2,7 +2,6 @@
 
 # === CONFIG ===
 INSTALL_DIR="$HOME/minecraft-server"
-MOD_DIR="$INSTALL_DIR/mods"
 BACKUP_DIR="$INSTALL_DIR/backups"
 
 # === DEPENDENCY CHECK ===
@@ -36,8 +35,8 @@ if [ "$SERVER_JAR_URL" == "null" ] || [ -z "$SERVER_JAR_URL" ]; then
 fi
 
 # === CREATE SERVER FOLDER ===
-echo "📂 Creating server folder structure..."
-mkdir -p "$MOD_DIR"
+echo "📂 Creating server folder structure at $INSTALL_DIR..."
+mkdir -p "$INSTALL_DIR"
 mkdir -p "$BACKUP_DIR"
 cd "$INSTALL_DIR" || {
   echo "❌ Error: Failed to enter $INSTALL_DIR. Check permissions."
@@ -99,5 +98,4 @@ echo "🚀 Starting the server..."
 }
 
 echo "✅ Minecraft server $MC_VERSION ($SERVER_TYPE) is up and running."
-echo "📂 Mods directory: $MOD_DIR"
 echo "🌍 World backups daily at 3 AM in: $BACKUP_DIR"

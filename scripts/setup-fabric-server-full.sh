@@ -18,7 +18,7 @@ for cmd in java curl screen unzip; do
 done
 
 # Update system packages and install dependencies
-sudo apt update && sudo apt install -y openjdk-21-jre-headless screen curl unzip || {
+sudo apt update && sudo apt install -y openjdk-24-jre-headless screen curl unzip || {
   echo "❌ Error: Failed to install dependencies. Check your internet connection and try again."
   exit 1
 }

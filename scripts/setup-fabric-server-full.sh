@@ -27,7 +27,12 @@ read -rp "Enter server type: " SERVER_TYPE
 
 # === FETCH SERVER JAR URL ===
 echo "🌐 Fetching server JAR URL from mcutils.com..."
-SERVER_JAR_URL=$(curl -s "https://mcutils.com/api/v1/jars?version=$MC_VERSION&type=$SERVER_TYPE" | jq -r '.url')
+API_URL="https://mcutils.com/api/v1/jars?version=$MC_VERSION&type=$SERVER_TYPE"
+RAW_RESPONSE=$(curl -s "$API_URL")
+
+echo "Raw API Response: $RAW_RESPONSE"
+
+SERVER_JAR_URL=$(echo "$RAW_RESPONSE" | jq -r '.url')
 
 if [ "$SERVER_JAR_URL" == "null" ] || [ -z "$SERVER_JAR_URL" ]; then
   echo "❌ Error: Could not find a server JAR for version $MC_VERSION and type $SERVER_TYPE. Please check your inputs and try again."

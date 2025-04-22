@@ -90,11 +90,11 @@ cat <<EOF > start-server.sh
 #!/bin/bash
 cd "$INSTALL_DIR"
 while true; do
-  echo "🟢 Starting Minecraft server..."
+#  echo "🟢 Starting Minecraft server..."
   screen -S smpserver -dm java -Xms2G -Xmx4G -jar fabric-server-launch.jar nogui
-  wait \$!
-  echo "🔁 Server crashed. Restarting in 10s..."
-  sleep 10
+#  wait \$!
+#  echo "🔁 Server crashed. Restarting in 10s..."
+#  sleep 10
 done
 EOF
 chmod +x start-server.sh

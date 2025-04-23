@@ -1,9 +1,9 @@
-# Fabric Server
+# Customizable Minecraft Server
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Minecraft Version](https://img.shields.io/badge/Minecraft-1.21.5-blue)](https://www.minecraft.net)
 [![Stars](https://img.shields.io/github/stars/entity12208/Fabric-Server)](https://github.com/entity12208/Fabric-Server/stargazers)
 
-A Linux-based Fabric Minecraft server setup script. Supports modded gameplay with performance and quality-of-life enhancements.
+A Linux-based Minecraft server setup script. Supports modded gameplay with performance and quality-of-life enhancements.
 
 ## Features
 - **Mod Support**: Pre-configured with SMP mods like Origins, REI, and Better Combat.

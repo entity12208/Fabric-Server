@@ -44,20 +44,23 @@ jobs:
 
           echo "🌐 Fetching server JAR URL for version $MC_VERSION and type $SERVER_TYPE..."
           API_RESPONSE=$(curl -s "https://mcutils.com/api/v1/jars?version=$MC_VERSION&type=$SERVER_TYPE")
-    
+
           # Debug: Print the raw API response
           echo "API Response: $API_RESPONSE"
 
           # Validate JSON using jq
-          if echo "$API_RESPONSE" | jq empty; then
+          if echo "$API_RESPONSE" | jq empty 2>/dev/null; then
             SERVER_JAR_URL=$(echo "$API_RESPONSE" | jq -r '.url')
+
+            # Check if 'url' field exists and is not empty
+            if [ -z "$SERVER_JAR_URL" ] || [ "$SERVER_JAR_URL" == "null" ]; then
+              echo "❌ Error: 'url' field is missing or empty in the API response."
+              echo "Debug Info: $API_RESPONSE"
+              exit 1
+            fi
           else
             echo "❌ Error: Invalid JSON response from API."
-            exit 1
-          fi
-
-          if [ "$SERVER_JAR_URL" == "null" ] || [ -z "$SERVER_JAR_URL" ]; then
-            echo "❌ Error: Could not find a server JAR for version $MC_VERSION and type $SERVER_TYPE."
+            echo "Debug Info: $API_RESPONSE"
             exit 1
           fi
 

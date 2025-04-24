@@ -28,23 +28,15 @@ read -rp "Enter server type: " SERVER_TYPE
 
 # === FETCH SERVER JAR URL ===
 echo "🌐 Fetching server JAR URL from mcutils.com..."
-SERVER_JAR_URL=$(curl -s "https://mcutils.com/api/server-jars/$SERVER_TYPE/$MC_VERSION/download")
-HTTP_STATUS=$(curl -L -o /dev/null -s -w "%{http_code}" "https://mcutils.com/api/server-jars/$SERVER_TYPE/$MC_VERSION/download")
+SERVER_JAR_URL="https://mcutils.com/api/server-jars/$SERVER_TYPE/$MC_VERSION/download"
+
+# Debug: Print the URL being fetched
+echo "Debug: Server JAR URL: $SERVER_JAR_URL"
+
+HTTP_STATUS=$(curl -L -o /dev/null -s -w "%{http_code}" "$SERVER_JAR_URL")
 
 if [ "$HTTP_STATUS" != "200" ]; then
   echo "❌ Error: Failed to fetch server JAR URL. HTTP status: $HTTP_STATUS"
-  exit 1
-fi
-
-if ! echo "$SERVER_JAR_URL" | jq empty > /dev/null 2>&1; then
-  echo "❌ Error: API response is not valid JSON."
-  exit 1
-fi
-
-SERVER_JAR_URL=$(echo "$SERVER_JAR_URL" | jq -r '.url')
-
-if [ "$SERVER_JAR_URL" == "null" ] || [ -z "$SERVER_JAR_URL" ]; then
-  echo "❌ Error: Could not find a server JAR for version $MC_VERSION and type $SERVER_TYPE."
   exit 1
 fi
 

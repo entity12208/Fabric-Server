@@ -63,11 +63,11 @@ echo "eula=true" > eula.txt
 
 # === INSTALL MODS ===
 if [ -f "$MODS_SCRIPT" ]; then
-  echo "⬇️ Running $MODS_SCRIPT to install mods..."
-  chmod +x "$MODS_SCRIPT"
-  "$MODS_SCRIPT"
+  echo "⬇️ Running Mod Installer..."
+  chmod +x update-mods.sh
+  update-mods.sh
 else
-  echo "⚠️ Warning: $MODS_SCRIPT not found. Skipping mod installation."
+  echo "⚠️ Warning: Mod Installer not found. Skipping mod installation."
 fi
 
 # === CREATE START SCRIPT ===

@@ -28,8 +28,8 @@ read -rp "Enter server type: " SERVER_TYPE
 
 # === FETCH SERVER JAR URL ===
 echo "🌐 Fetching server JAR URL from mcutils.com..."
-SERVER_JAR_URL=$(curl -s "https://mcutils.com/api/v1/jars?version=$MC_VERSION&type=$SERVER_TYPE")
-HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" "https://mcutils.com/api/v1/jars?version=$MC_VERSION&type=$SERVER_TYPE")
+SERVER_JAR_URL=$(curl -s "https://mcutils.com/api/server-jars/$SERVER_TYPE/$MC_VERSION/download")
+HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" "https://mcutils.com/api/server-jars/$SERVER_TYPE/$MC_VERSION/download")
 
 if [ "$HTTP_STATUS" != "200" ]; then
   echo "❌ Error: Failed to fetch server JAR URL. HTTP status: $HTTP_STATUS"

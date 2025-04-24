@@ -43,29 +43,34 @@ jobs:
           INSTALL_DIR="$HOME/minecraft-server-$MC_VERSION-$SERVER_TYPE"
 
           echo "🌐 Fetching server JAR URL for version $MC_VERSION and type $SERVER_TYPE..."
-          API_RESPONSE=$(curl -s "https://mcutils.com/api/v1/jars?version=$MC_VERSION&type=$SERVER_TYPE")
+          API_RESPONSE=$(curl -s -w "%{http_code}" -o response.json "https://mcutils.com/api/v1/jars?version=$MC_VERSION&type=$SERVER_TYPE")
+          HTTP_STATUS=$(tail -c 3 response.json) # Extract HTTP status
+          RESPONSE_BODY=$(head -c -3 response.json) # Extract body without status
 
-          # Debug: Print the raw API response
-          echo "API Response: $API_RESPONSE"
+          # Check HTTP status code
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "❌ Error: API request failed with status $HTTP_STATUS."
+            echo "Debug Info: $RESPONSE_BODY"
+            exit 1
+          fi
 
           # Validate JSON using jq
-          if echo "$API_RESPONSE" | jq empty 2>/dev/null; then
-            SERVER_JAR_URL=$(echo "$API_RESPONSE" | jq -r '.url')
+          if echo "$RESPONSE_BODY" | jq empty 2>/dev/null; then
+            SERVER_JAR_URL=$(echo "$RESPONSE_BODY" | jq -r '.url')
 
             # Check if 'url' field exists and is not empty
             if [ -z "$SERVER_JAR_URL" ] || [ "$SERVER_JAR_URL" == "null" ]; then
               echo "❌ Error: 'url' field is missing or empty in the API response."
-              echo "Debug Info: $API_RESPONSE"
+              echo "Debug Info: $RESPONSE_BODY"
               exit 1
             fi
           else
             echo "❌ Error: Invalid JSON response from API."
-            echo "Debug Info: $API_RESPONSE"
+            echo "Debug Info: $RESPONSE_BODY"
             exit 1
           fi
 
           echo "✅ Found server JAR URL: $SERVER_JAR_URL"
-
           echo "📂 Creating server folder at $INSTALL_DIR..."
           mkdir -p "$INSTALL_DIR"
           cd "$INSTALL_DIR"

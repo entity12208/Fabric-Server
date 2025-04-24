@@ -3,6 +3,7 @@
 # === CONFIG ===
 INSTALL_DIR="$HOME/minecraft-server"
 BACKUP_DIR="$INSTALL_DIR/backups"
+MODS_SCRIPT="./update-mods.sh"
 
 # === DEPENDENCY CHECK ===
 echo "🔍 Checking for required dependencies..."
@@ -54,6 +55,15 @@ curl -L -o "$SERVER_JAR" "$SERVER_JAR_URL" || {
 # === ACCEPT EULA ===
 echo "✅ Accepting Minecraft EULA..."
 echo "eula=true" > eula.txt
+
+# === INSTALL MODS ===
+if [ -f "$MODS_SCRIPT" ]; then
+  echo "⬇️ Running $MODS_SCRIPT to install mods..."
+  chmod +x "$MODS_SCRIPT"
+  "$MODS_SCRIPT"
+else
+  echo "⚠️ Warning: $MODS_SCRIPT not found. Skipping mod installation."
+fi
 
 # === CREATE START SCRIPT ===
 echo "⚙️ Creating start script..."

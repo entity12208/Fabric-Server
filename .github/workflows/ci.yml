@@ -43,7 +43,18 @@ jobs:
           INSTALL_DIR="$HOME/minecraft-server-$MC_VERSION-$SERVER_TYPE"
 
           echo "🌐 Fetching server JAR URL for version $MC_VERSION and type $SERVER_TYPE..."
-          SERVER_JAR_URL=$(curl -s "https://mcutils.com/api/v1/jars?version=$MC_VERSION&type=$SERVER_TYPE" | jq -r '.url')
+          API_RESPONSE=$(curl -s "https://mcutils.com/api/v1/jars?version=$MC_VERSION&type=$SERVER_TYPE")
+    
+          # Debug: Print the raw API response
+          echo "API Response: $API_RESPONSE"
+
+          # Validate JSON using jq
+          if echo "$API_RESPONSE" | jq empty; then
+            SERVER_JAR_URL=$(echo "$API_RESPONSE" | jq -r '.url')
+          else
+            echo "❌ Error: Invalid JSON response from API."
+            exit 1
+          fi
 
           if [ "$SERVER_JAR_URL" == "null" ] || [ -z "$SERVER_JAR_URL" ]; then
             echo "❌ Error: Could not find a server JAR for version $MC_VERSION and type $SERVER_TYPE."

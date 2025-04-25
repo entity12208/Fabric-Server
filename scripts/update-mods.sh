@@ -92,14 +92,14 @@ echo "7. Creative Mods"
 echo "8. Optimized Creative"
 read -rp "Enter the number (1-8): " choice
 
-case $choice in
-  1) update_mods SMPMODS[@] ;;
-  2) update_mods PVPMODS[@] ;;
-  3) update_mods VANILLAMODS[@] ;;
-  4) update_mods ENHANCEDVANILLAMODS[@] ;;
-  5) update_mods OPTIMIZEDSMPMODS[@] ;;
-  6) update_mods OPTIMIZEDPVPMODS[@] ;;
-  7) update_mods CREATIVEMODS[@] ;;
-  8) update_mods OPTIMIZEDCREATIVEMODS[@] ;;
+case "$choice" in
+  1) update_mods "SMPMODS[@]" ;;
+  2) update_mods "PVPMODS[@]" ;;
+  3) update_mods "VANILLAMODS[@]" ;;
+  4) update_mods "ENHANCEDVANILLAMODS[@]" ;;
+  5) update_mods "OPTIMIZEDSMPMODS[@]" ;;
+  6) update_mods "OPTIMIZEDPVPMODS[@]" ;;
+  7) update_mods "CREATIVEMODS[@]" ;;
+  8) update_mods "OPTIMIZEDCREATIVEMODS[@]" ;;
   *) echo "❌ Invalid choice. Exiting..." ;;
 esac

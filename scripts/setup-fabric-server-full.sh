@@ -3,7 +3,7 @@
 # === CONFIG ===
 INSTALL_DIR="$HOME/minecraft-server"
 BACKUP_DIR="$INSTALL_DIR/backups"
-MODS_SCRIPT="./update-mods.sh"
+MODS_SCRIPT="./update-mods.sh" # Relative to the current directory (scripts)
 
 # === DEPENDENCY CHECK ===
 echo "🔍 Checking for required dependencies..."
@@ -64,25 +64,27 @@ echo "eula=true" > eula.txt
 # === INSTALL MODS ===
 if [ -f "$MODS_SCRIPT" ]; then
   echo "⬇️ Running Mod Installer..."
-  chmod +x update-mods.sh
-  update-mods.sh
+  chmod +x "$MODS_SCRIPT"
+  "$MODS_SCRIPT"
 else
-  echo "⚠️ Warning: Mod Installer not found. Skipping mod installation."
+  echo "⚠️ Warning: Mod Installer script not found at $MODS_SCRIPT. Skipping mod installation."
 fi
 
 # === CREATE START SCRIPT ===
 echo "⚙️ Creating start script..."
-cat <<EOF > start-server.sh
+cat <<EOF > ../start-server.sh
 #!/bin/bash
 cd "$INSTALL_DIR"
+echo "⬇️ Updating mods before starting the server..."
+bash "$MODS_SCRIPT"
 echo "🟢 Starting Minecraft server..."
 java -Xms2G -Xmx4G -jar "$SERVER_JAR" nogui
 EOF
-chmod +x start-server.sh
+chmod +x ../start-server.sh
 
 # === CREATE DAILY BACKUP SCRIPT ===
 echo "⚙️ Creating backup script..."
-cat <<EOF > backup.sh
+cat <<EOF > ../backup.sh
 #!/bin/bash
 cd "$INSTALL_DIR"
 tar -czf "$BACKUP_DIR/world-\$(date +%F).tar.gz" world || {
@@ -93,16 +95,16 @@ find "$BACKUP_DIR" -type f -mtime +7 -delete || {
   echo "⚠️ Warning: Failed to clean old backups. Check permissions."
 }
 EOF
-chmod +x backup.sh
+chmod +x ../backup.sh
 
 # === ADD TO CRONTAB ===
 echo "📅 Adding scripts to crontab..."
-(crontab -l 2>/dev/null; echo "@reboot $INSTALL_DIR/start-server.sh") | crontab -
-(crontab -l 2>/dev/null; echo "0 3 * * * $INSTALL_DIR/backup.sh") | crontab -
+(crontab -l 2>/dev/null; echo "@reboot $INSTALL_DIR/../start-server.sh") | crontab -
+(crontab -l 2>/dev/null; echo "0 3 * * * $INSTALL_DIR/../backup.sh") | crontab -
 
 # === START THE SERVER ===
 echo "🚀 Starting the server..."
-./start-server.sh || {
+../start-server.sh || {
   echo "❌ Error: Failed to start the server. Check the logs for more details."
   exit 1
 }

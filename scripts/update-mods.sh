@@ -66,4 +66,4 @@ if [[ -n "${MOD_LISTS[$chosen_mod_list]}" ]]; then
 else
   echo "❌ Invalid mod list name. Please choose from the available options."
   exit 1
-fi 
+fi

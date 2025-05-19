@@ -1,119 +1,67 @@
 #!/bin/bash
+set -e
 
-# === CONFIGURATION ===
-INSTALL_DIR="$HOME/minecraft-server"
-BACKUP_DIR="$INSTALL_DIR/backups"
-MODS_SCRIPT="./update-mods.sh" # Relative to the current directory (scripts)
-SERVER_JAR=""
-CRONTAB_USER=$(whoami)
+echo "Welcome to the Minecraft Server Setup!"
+echo "Select server type to install:"
+echo "1) Fabric (for mods)"
+echo "2) Forge (for mods)"
+echo "3) PaperMC (for plugins)"
+read -p "Enter the number of your choice [1-3]: " CHOICE
 
-# === CHECK FOR DEPENDENCIES ===
-echo "🔍 Checking for required dependencies..."
-for cmd in java curl jq; do
-  if ! command -v "$cmd" &>/dev/null; then
-    echo "❌ Error: $cmd is not installed. Please install it and re-run the script."
-    exit 1
-  fi
-done
+case "$CHOICE" in
+    1)
+        echo "Setting up Fabric server..."
+        if [ ! -f fabric-installer.jar ]; then
+            curl -O https://meta.fabricmc.net/v2/versions/installer/fabric-installer-1.0.0.jar
+            mv fabric-installer-1.0.0.jar fabric-installer.jar
+        fi
+        java -jar fabric-installer.jar server -downloadMinecraft
+        MODS=(
+            "https://example.com/mod1-fabric.jar"
+            "https://example.com/mod2-fabric.jar"
+        )
+        mkdir -p mods
+        for mod in "${MODS[@]}"; do
+            curl -L -o "mods/$(basename $mod)" "$mod"
+        done
+        echo "eula=true" > eula.txt
+        echo "Fabric server setup complete."
+        ;;
+    2)
+        echo "Setting up Forge server..."
+        FORGE_VERSION="1.21.1-47.0.0"
+        FORGE_INSTALLER="forge-$FORGE_VERSION-installer.jar"
+        FORGE_URL="https://maven.minecraftforge.net/net/minecraftforge/forge/$FORGE_VERSION/$FORGE_INSTALLER"
+        if [ ! -f $FORGE_INSTALLER ]; then
+            curl -O "$FORGE_URL"
+        fi
+        java -jar $FORGE_INSTALLER --installServer
+        MODS=(
+            "https://example.com/mod1-forge.jar"
+            "https://example.com/mod2-forge.jar"
+        )
+        mkdir -p mods
+        for mod in "${MODS[@]}"; do
+            curl -L -o "mods/$(basename $mod)" "$mod"
+        done
+        echo "eula=true" > eula.txt
+        echo "Forge server setup complete."
+        ;;
+    3)
+        echo "Setting up PaperMC server..."
+        PAPER_VERSION=$(curl -s https://api.papermc.io/v2/projects/paper | jq -r '.versions[-1]')
+        PAPER_BUILD=$(curl -s "https://api.papermc.io/v2/projects/paper/versions/$PAPER_VERSION" | jq -r '.builds[-1]')
+        PAPER_JAR="paper-$PAPER_VERSION-$PAPER_BUILD.jar"
+        PAPER_URL="https://api.papermc.io/v2/projects/paper/versions/$PAPER_VERSION/builds/$PAPER_BUILD/downloads/paper-$PAPER_VERSION-$PAPER_BUILD.jar"
+        curl -o "$PAPER_JAR" "$PAPER_URL"
+        mkdir -p plugins
+        echo "eula=true" > eula.txt
+        echo "PaperMC server setup complete."
+        ;;
+    *)
+        echo "Invalid choice. Exiting."
+        exit 1
+        ;;
+esac
 
-# Install missing system dependencies
-echo "⬇️ Updating system packages and ensuring dependencies..."
-sudo apt update && sudo apt install -y openjdk-21-jre-headless curl jq || {
-  echo "❌ Error: Failed to install dependencies. Check your internet connection and try again."
-  exit 1
-}
-
-# === PROMPT FOR SERVER CONFIGURATION ===
-echo "🌐 Select the Minecraft version and server type:"
-read -rp "Enter Minecraft version (e.g., 1.21.5): " MC_VERSION
-echo "Available server types: fabric, paper, forge, vanilla"
-read -rp "Enter server type: " SERVER_TYPE
-
-# Validate user input
-if [[ -z "$MC_VERSION" || -z "$SERVER_TYPE" ]]; then
-  echo "❌ Error: Minecraft version or server type cannot be empty."
-  exit 1
-fi
-
-# === FETCH SERVER JAR ===
-SERVER_JAR_URL="https://mcutils.com/api/server-jars/$SERVER_TYPE/$MC_VERSION/download"
-echo "🌐 Fetching server JAR URL: $SERVER_JAR_URL"
-
-HTTP_STATUS=$(curl -L -o /dev/null -s -w "%{http_code}" "$SERVER_JAR_URL")
-if [ "$HTTP_STATUS" != "200" ]; then
-  echo "❌ Error: Failed to fetch server JAR URL. HTTP status: $HTTP_STATUS"
-  exit 1
-fi
-
-# === SETUP DIRECTORY STRUCTURE ===
-echo "📂 Creating server folder structure at $INSTALL_DIR..."
-mkdir -p "$INSTALL_DIR" "$BACKUP_DIR"
-cd "$INSTALL_DIR" || {
-  echo "❌ Error: Failed to enter $INSTALL_DIR. Check permissions."
-  exit 1
-}
-
-# === DOWNLOAD SERVER JAR ===
-SERVER_JAR="server-$MC_VERSION-$SERVER_TYPE.jar"
-echo "⬇️ Downloading server JAR as $SERVER_JAR..."
-curl -L -o "$SERVER_JAR" "$SERVER_JAR_URL" || {
-  echo "❌ Error: Failed to download server JAR. Check your internet connection."
-  exit 1
-}
-
-# === ACCEPT EULA ===
-echo "✅ Accepting Minecraft EULA..."
-echo "eula=true" > eula.txt
-
-# === INSTALL MODS ===
-if [ -f "$MODS_SCRIPT" ]; then
-  echo "⬇️ Running Mod Installer..."
-  chmod +x "$MODS_SCRIPT"
-  "$MODS_SCRIPT"
-else
-  echo "⚠️ Warning: Mod Installer script not found at $MODS_SCRIPT. Skipping mod installation."
-fi
-
-# === CREATE START SCRIPT ===
-START_SCRIPT="$INSTALL_DIR/start-server.sh"
-echo "⚙️ Creating start script at $START_SCRIPT..."
-cat <<EOF > "$START_SCRIPT"
-#!/bin/bash
-cd "$INSTALL_DIR"
-echo "⬇️ Updating mods before starting the server..."
-bash "$MODS_SCRIPT"
-echo "🟢 Starting Minecraft server..."
-java -Xms2G -Xmx4G -jar "$SERVER_JAR" nogui
-EOF
-chmod +x "$START_SCRIPT"
-
-# === CREATE BACKUP SCRIPT ===
-BACKUP_SCRIPT="$INSTALL_DIR/backup.sh"
-echo "⚙️ Creating backup script at $BACKUP_SCRIPT..."
-cat <<EOF > "$BACKUP_SCRIPT"
-#!/bin/bash
-cd "$INSTALL_DIR"
-tar -czf "$BACKUP_DIR/world-\$(date +%F).tar.gz" world || {
-  echo "⚠️ Warning: Failed to create backup. Check permissions."
-  exit 1
-}
-find "$BACKUP_DIR" -type f -mtime +7 -delete || {
-  echo "⚠️ Warning: Failed to clean old backups. Check permissions."
-}
-EOF
-chmod +x "$BACKUP_SCRIPT"
-
-# === ADD TO CRONTAB ===
-echo "📅 Adding start and backup scripts to crontab..."
-(crontab -l 2>/dev/null; echo "@reboot $START_SCRIPT") | crontab -
-(crontab -l 2>/dev/null; echo "0 3 * * * $BACKUP_SCRIPT") | crontab -
-
-# === START THE SERVER ===
-echo "🚀 Starting the server..."
-"$START_SCRIPT" || {
-  echo "❌ Error: Failed to start the server. Check the logs for more details."
-  exit 1
-}
-
-echo "✅ Minecraft server $MC_VERSION ($SERVER_TYPE) is up and running."
-echo "🌍 World backups will be created daily at 3 AM in: $BACKUP_DIR"
+echo "Setup finished! Use the appropriate start script to launch your server."

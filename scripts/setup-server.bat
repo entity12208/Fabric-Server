@@ -1,133 +1,80 @@
 @echo off
-REM === CONFIGURATION ===
-set "INSTALL_DIR=%USERPROFILE%\minecraft-server"
-set "BACKUP_DIR=%INSTALL_DIR%\backups"
-set "MODS_SCRIPT=%~dp0update-mods.bat"
-set "SERVER_JAR="
-set "JAVA_CMD=java"
+setlocal enabledelayedexpansion
 
-REM === CHECK FOR DEPENDENCIES ===
-echo Checking for required dependencies...
+echo Welcome to the Minecraft Server Setup!
+echo Select server type to install:
+echo 1^> Fabric (for mods)
+echo 2^> Forge (for mods)
+echo 3^> PaperMC (for plugins)
+set /p CHOICE=Enter the number of your choice [1-3]: 
 
-REM Check for Java
-where %JAVA_CMD% >nul 2>&1
-if %ERRORLEVEL% NEQ 0 (
-    echo [ERROR] Java is not installed or not in PATH.
-    echo Please install Java (e.g., OpenJDK 21+) and re-run this script.
-    pause
-    exit /b 1
+if "%CHOICE%"=="1" (
+    echo Setting up Fabric server...
+    if not exist fabric-installer.jar (
+        curl -L -o fabric-installer.jar https://meta.fabricmc.net/v2/versions/installer/fabric-installer-1.0.0.jar
+    )
+    java -jar fabric-installer.jar server -downloadMinecraft
+    if not exist mods (
+        mkdir mods
+    )
+    REM === Add your Fabric mod URLs below ===
+    set MODS=https://example.com/mod1-fabric.jar https://example.com/mod2-fabric.jar
+    for %%M in (%MODS%) do (
+        curl -L -o mods/%%~nxM %%M
+    )
+    echo eula=true > eula.txt
+    echo Fabric server setup complete.
+    goto :end
 )
 
-REM Check for curl
-where curl >nul 2>&1
-if %ERRORLEVEL% NEQ 0 (
-    echo [ERROR] curl is not installed or not in PATH.
-    echo Please install curl or use Windows 10+ where curl is included.
-    pause
-    exit /b 1
+if "%CHOICE%"=="2" (
+    echo Setting up Forge server...
+    set FORGE_VERSION=1.21.1-47.0.0
+    set FORGE_INSTALLER=forge-%FORGE_VERSION%-installer.jar
+    set FORGE_URL=https://maven.minecraftforge.net/net/minecraftforge/forge/%FORGE_VERSION%/%FORGE_INSTALLER%
+    if not exist %FORGE_INSTALLER% (
+        curl -L -o %FORGE_INSTALLER% %FORGE_URL%
+    )
+    java -jar %FORGE_INSTALLER% --installServer
+    if not exist mods (
+        mkdir mods
+    )
+    REM === Add your Forge mod URLs below ===
+    set MODS=https://example.com/mod1-forge.jar https://example.com/mod2-forge.jar
+    for %%M in (%MODS%) do (
+        curl -L -o mods/%%~nxM %%M
+    )
+    echo eula=true > eula.txt
+    echo Forge server setup complete.
+    goto :end
 )
 
-REM === PROMPT FOR SERVER CONFIGURATION ===
-set /p MC_VERSION="Enter Minecraft version (e.g., 1.21.5): "
-echo Available server types: fabric, paper, forge, vanilla
-set /p SERVER_TYPE="Enter server type: "
-
-if "%MC_VERSION%"=="" (
-    echo [ERROR] Minecraft version cannot be empty.
-    pause
-    exit /b 1
-)
-if "%SERVER_TYPE%"=="" (
-    echo [ERROR] Server type cannot be empty.
-    pause
-    exit /b 1
-)
-
-REM === FETCH SERVER JAR ===
-set "SERVER_JAR_URL=https://mcutils.com/api/server-jars/%SERVER_TYPE%/%MC_VERSION%/download"
-echo Fetching server JAR from %SERVER_JAR_URL%...
-
-REM Test if URL is reachable
-curl -s -o nul -w "%%{http_code}" "%SERVER_JAR_URL%" > tmp_status.txt
-set /p HTTP_STATUS=<tmp_status.txt
-del tmp_status.txt
-
-if not "%HTTP_STATUS%"=="200" (
-    echo [ERROR] Failed to fetch server JAR URL. HTTP status: %HTTP_STATUS%
-    pause
-    exit /b 1
+if "%CHOICE%"=="3" (
+    echo Setting up PaperMC server...
+    REM Automatically get the latest PaperMC version and build using PowerShell
+    for /f "tokens=*" %%a in ('powershell -Command "$v=(Invoke-RestMethod https://api.papermc.io/v2/projects/paper).versions[-1]; $b=(Invoke-RestMethod ""https://api.papermc.io/v2/projects/paper/versions/$v"").builds[-1]; Write-Output $v $b"') do (
+        set PAPER_VER=%%a
+        goto :gotver
+    )
+    :gotver
+    for /f "tokens=1,2" %%a in ("%PAPER_VER%") do (
+        set PV=%%a
+        set PB=%%b
+    )
+    set PAPER_JAR=paper-%PV%-%PB%.jar
+    set PAPER_URL=https://api.papermc.io/v2/projects/paper/versions/%PV%/builds/%PB%/downloads/paper-%PV%-%PB%.jar
+    curl -L -o %PAPER_JAR% %PAPER_URL%
+    if not exist plugins (
+        mkdir plugins
+    )
+    echo eula=true > eula.txt
+    echo PaperMC server setup complete.
+    goto :end
 )
 
-REM === SETUP DIRECTORY STRUCTURE ===
-echo Creating server folder structure at %INSTALL_DIR%...
-mkdir "%INSTALL_DIR%"
-mkdir "%BACKUP_DIR%"
-cd /d "%INSTALL_DIR%" || (
-    echo [ERROR] Failed to enter %INSTALL_DIR%. Check permissions.
-    pause
-    exit /b 1
-)
+echo Invalid choice. Exiting.
+goto :eof
 
-REM === DOWNLOAD SERVER JAR ===
-set "SERVER_JAR=server-%MC_VERSION%-%SERVER_TYPE%.jar"
-echo Downloading server JAR as %SERVER_JAR%...
-curl -L -o "%SERVER_JAR%" "%SERVER_JAR_URL%"
-if not exist "%SERVER_JAR%" (
-    echo [ERROR] Failed to download server JAR.
-    pause
-    exit /b 1
-)
-
-REM === ACCEPT EULA ===
-echo eula=true > eula.txt
-echo Accepted Minecraft EULA.
-
-REM === INSTALL MODS ===
-if exist "%MODS_SCRIPT%" (
-    echo Running Mod Installer...
-    call "%MODS_SCRIPT%"
-) else (
-    echo [WARNING] Mod Installer script not found at %MODS_SCRIPT%. Skipping mod installation.
-)
-
-REM === CREATE START SCRIPT ===
-set "START_SCRIPT=%INSTALL_DIR%\start-server.bat"
-echo Creating start script at %START_SCRIPT%...
-(
-echo @echo off
-echo cd /d "%INSTALL_DIR%"
-echo echo Updating mods before starting the server...
-echo call "%MODS_SCRIPT%"
-echo echo Starting Minecraft server...
-echo java -Xms2G -Xmx4G -jar "%SERVER_JAR%" nogui
-) > "%START_SCRIPT%"
-attrib +x "%START_SCRIPT%"
-
-REM === CREATE BACKUP SCRIPT ===
-set "BACKUP_SCRIPT=%INSTALL_DIR%\backup.bat"
-echo Creating backup script at %BACKUP_SCRIPT%...
-(
-echo @echo off
-echo cd /d "%INSTALL_DIR%"
-echo powershell -Command "Compress-Archive -Path world -DestinationPath \"%BACKUP_DIR%\world-$(Get-Date -Format yyyy-MM-dd).zip\""
-echo REM Clean backups older than 7 days
-echo powershell -Command "Get-ChildItem -Path \"%BACKUP_DIR%\" -Filter *.zip ^| Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-7) } ^| Remove-Item"
-) > "%BACKUP_SCRIPT%"
-attrib +x "%BACKUP_SCRIPT%"
-
-REM === INSTRUCTION FOR TASK SCHEDULER ===
-echo.
-echo [INFO] To run the server and backups automatically on Windows:
-echo 1. Add start-server.bat to Task Scheduler with "At log on" or "At startup" trigger.
-echo 2. Add backup.bat to Task Scheduler with a "Daily" trigger (e.g., 3 AM).
-echo.
-echo [INFO] See https://learn.microsoft.com/en-us/windows/win32/taskschd/task-scheduler-start-page for Task Scheduler usage.
-echo.
-
-REM === START THE SERVER ===
-echo Starting the server...
-call "%START_SCRIPT%"
-
-echo Minecraft server %MC_VERSION% (%SERVER_TYPE%) is up and running.
-echo World backups will be created in: %BACKUP_DIR%
+:end
+echo Setup finished! Use the start-server.bat file to launch your server.
 pause
